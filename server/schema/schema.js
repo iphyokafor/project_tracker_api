@@ -36,6 +36,18 @@ const ProjectType = new GraphQLObjectType({
     })
 });
 
+// Actions Type
+const ActionType = new GraphQLObjectType({
+    name: 'Action',
+    fields: () => ({
+        id: { type: GraphQLID },
+        project_id: { type: GraphQLID },
+        description: { type: GraphQLString },
+        note: { type: GraphQLString }
+    })
+});
+
+
 // Root query
 const RootQuery = new GraphQLObjectType({
     name: 'RootQueryType',
