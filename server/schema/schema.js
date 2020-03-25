@@ -12,11 +12,6 @@ import User from '../models/usermodel';
 import Project from '../models/projectmodel';
 import Action from '../models/actionmodel';
 
-// const users = [
-//     { id: '1', username: 'John Doe', password: '23456ab' },
-//     { id: '2', username: 'Steve Smith', password: '0987bd' },
-//     { id: '3', username: 'Sara Williams', password: '12345ef' },
-// ];
 
 // User Type
 const UserType = new GraphQLObjectType({
@@ -72,11 +67,6 @@ const RootQuery = new GraphQLObjectType({
                 id: { type: GraphQLID }
             },
             resolve(parent, args) {
-                // for (let i = 0; i < users.length; i++) {
-                //     if (users[i].id == args.id) {
-                //         return users[i];
-                //     }
-                // }
                 return User.findById(args.id);
             }
         },
