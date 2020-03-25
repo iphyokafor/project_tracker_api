@@ -8,19 +8,22 @@ import {
     GraphQLBoolean,
     GraphQLID
 } from 'graphql';
+import User from '../models/usermodel';
+import Project from '../models/projectmodel';
+import Action from '../models/actionmodel';
 
-const users = [
-    { id: '1', username: 'John Doe', password: '23456ab' },
-    { id: '2', username: 'Steve Smith', password: '0987bd' },
-    { id: '3', username: 'Sara Williams', password: '12345ef' },
-];
+// const users = [
+//     { id: '1', username: 'John Doe', password: '23456ab' },
+//     { id: '2', username: 'Steve Smith', password: '0987bd' },
+//     { id: '3', username: 'Sara Williams', password: '12345ef' },
+// ];
 
 // User Type
 const UserType = new GraphQLObjectType({
     name: 'User',
     fields: () => ({
         id: { type: GraphQLID },
-        username: { type: GraphQLString },
+        userName: { type: GraphQLString },
         password: { type: GraphQLString }
     })
 });
@@ -32,7 +35,13 @@ const ProjectType = new GraphQLObjectType({
         id: { type: GraphQLID },
         name: { type: GraphQLString },
         description: { type: GraphQLString },
-        completed: { type: GraphQLBoolean }
+        completed: { type: GraphQLBoolean },
+        actions: {
+            type: new GraphQLList(ActionType),
+            resolve(parent, args) {
+                return Action.find({ projectId: parent.id });
+            }
+        }
     })
 });
 
@@ -41,9 +50,14 @@ const ActionType = new GraphQLObjectType({
     name: 'Action',
     fields: () => ({
         id: { type: GraphQLID },
-        project_id: { type: GraphQLID },
         description: { type: GraphQLString },
-        note: { type: GraphQLString }
+        note: { type: GraphQLString },
+        project: {
+            type: ProjectType,
+            resolve(parent, args) {
+                return Project.findById(parent.projectId);
+            }
+        }
     })
 });
 
@@ -55,19 +69,109 @@ const RootQuery = new GraphQLObjectType({
         user: {
             type: UserType,
             args: {
-                id: { type: GraphQLString }
+                id: { type: GraphQLID }
             },
             resolve(parent, args) {
-                for (let i = 0; i < users.length; i++) {
-                    if (users[i].id == args.id) {
-                        return users[i];
-                    }
-                }
+                // for (let i = 0; i < users.length; i++) {
+                //     if (users[i].id == args.id) {
+                //         return users[i];
+                //     }
+                // }
+                return User.findById(args.id);
+            }
+        },
+        project: {
+            type: ProjectType,
+            args: {
+                id: { type: GraphQLID }
+            },
+            resolve(parent, args) {
+                return Project.findById(args.id);
+            }
+        },
+        action: {
+            type: ActionType,
+            args: {
+                id: { type: GraphQLID }
+            },
+            resolve(parent, args) {
+                return Action.findById(args.id);
+            }
+        },
+        actions: {
+            type: new GraphQLList(ActionType),
+            resolve(parent, args) {
+                return Action.find({});
+            }
+        },
+        projects: {
+            type: new GraphQLList(ProjectType),
+            resolve(parent, args) {
+                return Project.find({});
+            }
+        },
+        users: {
+            type: new GraphQLList(UserType),
+            resolve(parent, args) {
+                return User.find({});
             }
         }
     }
 });
 
+const Mutation = new GraphQLObjectType({
+    name: 'Mutation',
+    fields: {
+        addUser: {
+            type: UserType,
+            args: {
+                userName: { type: new GraphQLNonNull(GraphQLString) },
+                password: { type: new GraphQLNonNull(GraphQLString) }
+            },
+            resolve(parent, args) {
+                let user = new User({
+                    userName: args.userName,
+                    password: args.password
+                });
+                return user.save();
+            }
+        },
+        addProject: {
+            type: ProjectType,
+            args: {
+                name: { type: new GraphQLNonNull(GraphQLString) },
+                description: { type: new GraphQLNonNull(GraphQLString) },
+                completed: { type: GraphQLBoolean }
+            },
+            resolve(parent, args) {
+                let project = new Project({
+                    name: args.name,
+                    description: args.description,
+                    completed: args.completed
+                });
+                return project.save();
+            }
+        },
+        addAction: {
+            type: ActionType,
+            args: {
+                description: { type: new GraphQLNonNull(GraphQLString) },
+                note: { type: new GraphQLNonNull(GraphQLString) },
+                projectId: { type: new GraphQLNonNull(GraphQLID) }
+            },
+            resolve(parent, args) {
+                let action = new Action({
+                    description: args.description,
+                    note: args.note,
+                    projectId: args.projectId
+                });
+                return action.save();
+            }
+        }
+    }
+})
+
 export default new GraphQLSchema({
-    query: RootQuery
+    query: RootQuery,
+    mutation: Mutation
 });
